@@ -5,10 +5,6 @@ This twitter bot uses tweepy to play games of chess against people on twitter.
 
 Moves are made by tweeting at the bot with a move in PGN notation. The bot uses the Stockfish engine to generate its
 reply moves. The bot also replies to special hashtags.
-
-Recent changes:
-- Docstrings moved inside of functions
-- Script can now be imported as a module
 """
 import tweepy
 import re
@@ -43,10 +39,8 @@ def retrieve_last_seen_id(file_name):
     :param file_name: the name of the file from where the id will be read
     :return: the last seen id
     """
-    f_read = open(file_name, 'r')
-    last_seen_id = int(f_read.read().strip())
-    f_read.close()
-    return last_seen_id
+    with open(file_name) as f_read:
+        return int(f_read.read().strip())
 
 
 def store_last_seen_id(last_seen_id, file_name):
@@ -136,10 +130,7 @@ def pgn_list_to_string(pgn_list):
     :param pgn_list: a list of moves in pgn notation
     :return: a string with the moves separated by spaces
     """
-    ret = ""
-    for a in pgn_list:
-        ret += a + " "
-    return ret
+    return " ".join(pgn_list) + " "
 
 
 def create_board_image(board):
@@ -151,7 +142,7 @@ def create_board_image(board):
     # URL that loads an image of the board if you concat the FEN to the end of it
     url = "http://www.fen-to-image.com/image/"
     fen = re.findall('\S*', board.fen())[0]
-    url = url + fen
+    url += fen
     filename = 'board.jpg'
     request = requests.get(url, stream=True)
     with open('board.jpg', 'wb') as image:
@@ -192,7 +183,6 @@ def send_email(subject, message):
     msg['To'] = ""
     msg['Subject'] = subject
     s = smtplib.SMTP("smtp.office365.com", 587)
-    s.ehlo()
     s.starttls()
     s.ehlo()
     s.login('', '')
@@ -211,7 +201,7 @@ def main():
 
     # Go through each of the mentions
     for mention in reversed(mentions):
-        print("Tweet received: " + mention.full_text)
+        print("Tweet received:", mention.full_text)
         # Change the last seen id to be the id of the current tweet
         last_seen_id = mention.id
         store_last_seen_id(last_seen_id, FILE1_NAME)
@@ -223,14 +213,9 @@ def main():
         # game_over is a boolean to see if the bot should let the user know how to create a gif of their game
         game_over = False
 
-        # Open the file with the games
-        games = open(FILE2_NAME, "r")
-        # Store all of the games in a list
-        list_of_games = []
-        for game in games:
-            list_of_games.append(game.strip().split(","))
-        games.close()
-        print("List of games: " + str(list_of_games))
+        with open(FILE2_NAME) as gamefile:
+            list_of_games = [game.strip().split(",") for game in gamefile]
+        print("List of games: ", str(list_of_games))
 
         # Check if a game with this user already exists
         game_index = -1
