@@ -5,6 +5,10 @@ This twitter bot uses tweepy to play games of chess against people on twitter.
 
 Moves are made by tweeting at the bot with a move in PGN notation. The bot uses the Stockfish engine to generate its
 reply moves. The bot also replies to special hashtags.
+
+Recent changes:
+- Docstrings moved inside of functions
+- Script can now be imported as a module
 """
 import tweepy
 import re
@@ -32,65 +36,72 @@ FILE1_NAME = 'last_seen_id.txt'
 # File to store the games of each user
 FILE2_NAME = 'games.txt'
 
-"""
-retrieve_last_seen_id will return the id of the last seen mention (tweet)
-file_name - the name of the file from where the id will be read
-returns the last seen id
-"""
+
 def retrieve_last_seen_id(file_name):
+    """
+    Method will return the id of the last seen mention (tweet)
+    :param file_name: the name of the file from where the id will be read
+    :return: the last seen id
+    """
     f_read = open(file_name, 'r')
     last_seen_id = int(f_read.read().strip())
     f_read.close()
     return last_seen_id
 
-"""
-store_last_seen_id will write the last seen id to a file
-last_seen_id - the id of the last seen mention (tweet)
-file_name - the name of the file where the id will be stored
-"""
+
 def store_last_seen_id(last_seen_id, file_name):
+    """
+    Method will write the last seen id to a file
+    :param last_seen_id: the id of the last seen mention (tweet)
+    :param file_name: the name of the file where the id will be stored
+    :return:
+    """
     f_write = open(file_name, 'w')
     f_write.write(str(last_seen_id))
     f_write.close()
 
-"""
-delete_all_tweets will delete all tweets on the account to make testing more efficient
-"""
+
 def delete_all_tweets():
+    """
+    Method will delete all tweets on the account to make testing more efficient
+    :return: None
+    """
     tweets = api.user_timeline()
     for tweet in tweets:
         api.destroy_status(tweet.id)
 
-"""
-possible_moves will return a list of all of the possible moves in a position in PGN notation
-board - a chess.Board() object
-return a list of the possible moves
-"""
+
 def possible_moves(board):
+    """
+    Method will return a list of all of the possible moves in a position in PGN notation
+    :param board: a chess.Board() object
+    :return: a list of the possible moves
+    """
     string = re.search(r'\([^\)]*\)', str(board.legal_moves)).group()
     # Remove the parentheses
     string = string[1:-1]
     return string.split(', ')
 
 
-"""
-push_pgn will apply the moves listed in the argument and return a board after those moves have been applied
-pgn - a list of moves in PGN notation without numbers
-return a chess.Board() object after those moves have been applied in order
-"""
 def push_pgn(pgn):
+    """
+    Method will apply the moves listed in the argument and return a board after those moves have been applied
+    :param pgn: a list of moves in PGN notation without numbers
+    :return: a chess.Board() object after those moves have been applied in order
+    """
     board = chess.Board()
     for move in pgn:
         board.push_san(move)
     return board
 
-"""
-apply_player_move will attempt to make a move for the player
-game_history - a list of the moves in PGN notation without numbers
-attemtped_move - the attemped player move in PGN notation
-return True is the move was successfully applied, False otherwise
-"""
+
 def apply_player_move(game_history, attempted_move):
+    """
+    Method will attempt to make a move for the player
+    :param game_history: a list of the moves in PGN notation without numbers
+    :param attempted_move: the attempted player move in PGN notation
+    :return: True if the move was successfully applied, False otherwise
+    """
     # Get the board to the current position
     board = push_pgn(game_history)
     pos_moves = possible_moves(board)
@@ -101,12 +112,13 @@ def apply_player_move(game_history, attempted_move):
         game_history.append(attempted_move)
         return True
 
-"""
-apply_bot_move will take a board and make a move using stockfish
-game_history - a list of the previous moves in PGN notation without numbers
-return the move that was made
-"""
+
 def apply_bot_move(game_history):
+    """
+    Method will take a board and make a move using Stockfish
+    :param game_history: a list of the previous moves in PGN notation without numbers
+    :return: the move that was made
+    """
     # Open the stockfish engine
     engine = chess.engine.SimpleEngine.popen_uci("stockfish-10-win\Windows\stockfish_10_x64.exe")
     # Give it 5 seconds per move
@@ -117,23 +129,25 @@ def apply_bot_move(game_history):
     game_history.append(my_move)
     return my_move
 
-"""
-pgn_list_to_string takes the game moves in a list and converts them to a string separated by spaces for filewriting
-pgn_list - a list of moves in pgn notation
-return the moves separated by spaces in a string
-"""
+
 def pgn_list_to_string(pgn_list):
+    """
+    Method takes the game moves in a list and converts them to a string separated by spaces for file writing
+    :param pgn_list: a list of moves in pgn notation
+    :return: a string with the moves separated by spaces
+    """
     ret = ""
     for a in pgn_list:
         ret += a + " "
     return ret
 
-"""
-create_board_image will return the filename of an image of the chess board
-board - a chess.Board() object
-return the file name of an image of a chess board in the same state as the chess.Board() object
-"""
+
 def create_board_image(board):
+    """
+    Method will return the filename of an image of the chess board
+    :param board: a chess.Board() object
+    :return: the file name of an image of a chess board in the same state as the chess.Board() object
+    """
     # URL that loads an image of the board if you concat the FEN to the end of it
     url = "http://www.fen-to-image.com/image/"
     fen = re.findall('\S*', board.fen())[0]
@@ -145,14 +159,15 @@ def create_board_image(board):
             image.write(chunk)
     return filename
 
-"""
-split_to_240_char will take a string and split it into pieces with 240 characters or less
-string - a string to be split
-return a list of the pieces of the string after it has been split
-"""
+
 def split_to_240_char(string):
+    """
+    Method will take a string and split it into pieces with 240 characters or less
+    :param string: a string to be split
+    :return: a list of the pieces of the string after it has been split
+    """
     ret = []
-    # Split the string on the spaces so the string fragments will end on a space instead of cutting words in half
+    # Split the string on the spaces so your string fragments will end on a space instead of cutting words in half
     string_list = string.split()
     fragment = ""
     for a in string_list:
@@ -164,12 +179,14 @@ def split_to_240_char(string):
     ret.append(fragment)
     return ret
 
-"""
-send_email method will send an email from ******* to *******
-subject - the subject of the message
-message - the message to be sent
-"""
+
 def send_email(subject, message):
+    """
+    Method will send an email from one email to another the provided message with the provided subject
+    :param subject: the subject of the message
+    :param message: the message to be sent
+    :return: None
+    """
     msg = email.message_from_string(message)
     msg['From'] = ""
     msg['To'] = ""
@@ -181,10 +198,13 @@ def send_email(subject, message):
     s.login('', '')
     s.sendmail("", "", msg.as_string())
     s.quit()
-"""
-Main method will answer tweets appropriately.
-"""
+
+
 def main():
+    """
+    Main method will respond to tweets appropriately
+    :return: None
+    """
     # Retrieve the last seen id and pull the mentions that came after that id
     last_seen_id = retrieve_last_seen_id(FILE1_NAME)
     mentions = api.mentions_timeline(last_seen_id, tweet_mode='extended')
@@ -235,7 +255,8 @@ def main():
             make_a_move = False
             print("User tried to report an error.")
             message = "A user reported an error using #error in their tweet. Here are the tweet contents: "
-            message += "\nMention ID: " + str(mention.id) + "\nUsername: " + mention.user.screen_name + "\nText: " + mention.full_text
+            message += "\nMention ID: " + str(
+                mention.id) + "\nUsername: " + mention.user.screen_name + "\nText: " + mention.full_text
             send_email("An Error Was Reported", message)
         # Check if they want to see all valid moves
         elif '#possiblemoves' in tweet_text.lower():
@@ -251,8 +272,9 @@ def main():
                 board = chess.Board()
             pos_moves = possible_moves(board)
             filename = create_board_image(board)
-            api.update_with_media(filename, status="@" + mention.user.screen_name + " Here are all of the valid moves in this position: " +
-                pgn_list_to_string(pos_moves), in_reply_to_status_id=mention.id)
+            api.update_with_media(filename,
+                                  status="@" + mention.user.screen_name + " Here are all of the valid moves in this position: " +
+                                         pgn_list_to_string(pos_moves), in_reply_to_status_id=mention.id)
         # Check if they want to see the previous move history of their game
         elif '#getpgn' in tweet_text.lower():
             make_a_move = False
@@ -272,7 +294,8 @@ def main():
         elif game_index == -1 and "#startgame" not in tweet_text.lower():
             make_a_move = False
             print("User tried to start a game without #startgame")
-            api.update_status("@" + mention.user.screen_name + " Include #startgame if you would like to start a game.", mention.id)
+            api.update_status("@" + mention.user.screen_name + " Include #startgame if you would like to start a game.",
+                              mention.id)
         # The games are stored in the file in the format "username, game in pgn notation"
         # For example:
         # codinglover123, e4 e5 d4
@@ -321,8 +344,8 @@ def main():
                         list_of_games.remove(curr_game)
                         filename = create_board_image(board)
                         api.update_with_media(filename,
-                                            status="@" + mention.user.screen_name + " You mated me! Congratulations!",
-                                            in_reply_to_status_id=mention.id)
+                                              status="@" + mention.user.screen_name + " You mated me! Congratulations!",
+                                              in_reply_to_status_id=mention.id)
                     # Otherwise, have the bot make a move in reply
                     else:
                         print("Bot successfully made a move in reply.")
@@ -334,21 +357,23 @@ def main():
                             game_over = True
                             list_of_games.remove(curr_game)
                             print("Bot put user in checkmate.")
-                            api.update_with_media(filename, status="@" + mention.user.screen_name + " " + bot_move + "Checkmate!",
-                                    in_reply_to_status_id=mention.id)
-                        # Otherwise, just tweet the bot's move and a picture of the game
+                            api.update_with_media(filename, status="@" + mention.user.screen_name + " " + bot_move +
+                                                                   "Checkmate!", in_reply_to_status_id=mention.id)
+                            # Otherwise, just tweet the bot's move and a picture of the game
                         else:
                             api.update_with_media(filename, status="@" + mention.user.screen_name + " " + bot_move,
-                                    in_reply_to_status_id=mention.id)
+                                                  in_reply_to_status_id=mention.id)
                 # If the user's move didn't go through, tweet them back that it was invalid
                 else:
                     print("Player move was invalid.")
                     board = push_pgn(move_history)
                     filename = create_board_image(board)
-                    api.update_with_media(filename, status="@" + mention.user.screen_name +
-                            " That move is invalid. If you would to see a list of valid moves, use the #possiblemoves",
-                            in_reply_to_status_id=mention.id)
-            # If they are trying to start the game as black have the bot make the first move
+                    api.update_with_media(filename, status="@" + mention.user.screen_name + " That move is invalid. "
+                                                                                            "If you would to see a "
+                                                                                            "list of valid moves, "
+                                                                                            "use the #possiblemoves",
+                                          in_reply_to_status_id=mention.id)
+                    # If they are trying to start the game as black have the bot make the first move
             elif '#startgame' in tweet_text.lower():
                 print("Player trying to start the game as black.")
                 bot_move = apply_bot_move(move_history)
@@ -357,13 +382,15 @@ def main():
                 board = push_pgn(move_history)
                 filename = create_board_image(board)
                 api.update_with_media(filename, status="@" + mention.user.screen_name + " " + bot_move,
-                        in_reply_to_status_id=mention.id)
-            # If they did not make a move (If they tweeted a # that wasn't one of the ones with a special function without a move before it)
+                                      in_reply_to_status_id=mention.id)
+            # If they did not make a move (If they tweeted a # that wasn't one of the ones with a special
+            # function without a move before it)
             else:
                 print("Player didn't make a move.")
                 board = push_pgn(move_history)
                 filename = create_board_image(board)
-                api.update_with_media(filename, status="@" + mention.user.screen_name + " You need to make a move.", in_reply_to_status_id=mention.id)
+                api.update_with_media(filename, status="@" + mention.user.screen_name + " You need to make a move.",
+                                      in_reply_to_status_id=mention.id)
             # Delete the file from the computer
             os.remove(filename)
 
@@ -379,7 +406,8 @@ def main():
         if game_over:
             pgn = split_to_240_char(curr_game[1])
             print("Here is the pgn: " + str(pgn))
-            api.update_status("@" + mention.user.screen_name + " Use this link and the following pgn to create a gif of your game! https://www.chess.com/gifs", mention.id)
+            api.update_status("@" + mention.user.screen_name + " Use this link and the following pgn to create a gif "
+                                                               "of your game! https://www.chess.com/gifs", mention.id)
             time.sleep(5)
             for a in pgn:
                 print("I entered the for loop.")
@@ -390,10 +418,12 @@ def main():
         for game in list_of_games:
             f.write(game[0] + ',' + game[1] + '\n')
 
-while True:
-    print("Loop started.")
-    try:
-        main()
-    except:
-        pass
-    time.sleep(30)
+
+if __name__ == '__main__':
+    while True:
+        print("Loop started.")
+        try:
+            main()
+        except:
+            pass
+        time.sleep(120)
